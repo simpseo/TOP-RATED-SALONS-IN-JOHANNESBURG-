@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      // Using the user email from runtime as instructed if admin feature is present
+      return isSignedIn() && request.auth.token.email == "info.simpseo@gmail.com" && request.auth.token.email_verified == true;
+    }
+
+    // --- User Validation ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'email', 'subscriptionTier', 'role']) &&
+             data.userId == request.auth.uid &&
+             data.email is string && data.email.size() <= 100 &&
+             data.subscriptionTier in ['free', 'vip', 'elite'] &&
+             data.role in ['customer', 'business_owner', 'admin'];
+    }
+
+    // --- Business Validation ---
+    function isValidBusiness(data) {
+      return data.keys().hasAll(['businessName', 'slug', 'ownerId', 'primaryCategory', 'suburb', 'mainImage', 'rankTier']) &&
+             data.businessName is string && data.businessName.size() <= 100 &&
+             data.slug is string && data.slug.size() <= 100 &&
+             data.ownerId == request.auth.uid &&
+             data.primaryCategory is string &&
+             data.suburb is string &&
+             data.mainImage is string &&
+             data.rankTier in ['basic', 'standard', 'premium'] &&
+             (!('gbpLink' in data) || (data.gbpLink is string && data.gbpLink.size() <= 500)) &&
+             (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 10 && (data.gallery.size() == 0 || data.gallery[0] is string)));
+    }
+
+    // --- Rules ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['subscriptionTier', 'displayName', 'updatedAt']) &&
+                    (incoming().subscriptionTier in ['free', 'trial', 'standard', 'vip']);
+    }
+
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidBusiness(incoming());
+      allow update: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['businessName', 'primaryCategory', 'suburb', 'phone', 'website', 'gbpLink', 'description', 'isPremium', 'mainImage', 'gallery', 'rankTier', 'updatedAt']);
+      allow delete: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /leads/{leadId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow read: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // Support for existing test collection connection
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

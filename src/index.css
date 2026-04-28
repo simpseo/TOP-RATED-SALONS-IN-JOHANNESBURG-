@@ -31,4 +31,12 @@
   .arch-image {
     @apply rounded-t-full aspect-[4/5] object-cover;
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile and subscription details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "subscriptionTier": { "type": "string", "enum": ["free", "trial", "standard", "vip"] },
+        "role": { "type": "string", "enum": ["customer", "business_owner", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "subscriptionTier", "role"]
+    },
+    "Business": {
+      "title": "Business",
+      "description": "Beauty business listing",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string" },
+        "slug": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "verifiedStatus": { "type": "boolean" },
+        "primaryCategory": { "type": "string" },
+        "rankTier": { "type": "string", "enum": ["basic", "standard", "premium"] },
+        "suburb": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "mainImage": { "type": "string" },
+        "gallery": { "type": "array", "items": { "type": "string" } },
+        "phone": { "type": "string" },
+        "website": { "type": "string" },
+        "bookingUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "isPremium": { "type": "boolean" },
+        "services": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "price": { "type": "number" },
+              "duration": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "bookingPlans": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["businessName", "slug", "ownerId", "primaryCategory", "suburb"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Customer appointments",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["businessId", "customerId", "serviceName", "date", "time"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Chat messages",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "businessId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "receiverId", "text", "createdAt"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Claims and audit requests",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "businessId": { "type": "string" },
+        "type": { "type": "string", "enum": ["claim", "audit", "contact"] },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "processed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/businesses/{businessId}": {
+      "schema": "Business",
+      "description": "Business listings"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Lead and claim logs"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "User appointments"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Chat messages"
+    }
+  }
+}
